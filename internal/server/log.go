@@ -2,6 +2,7 @@ package server;
 
 import (
 	"sync"
+	"fmt"
 )
 
 type Log struct {
@@ -21,7 +22,18 @@ func (c *Log) Append(record Record) (uint64, error) {
 	return record.Offset, nil
 }
 
+func (c *Log) Read(offset uint64) (Record, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if offset >= uint64(len(c.records)) {
+		return Record{}, ErrOffsetNotFound
+	}
+	return c.records[offset], nil
+}
+
 type Record struct {
 	Value []byte `json:"value"`
 	Offset uint64 `json:"offset"`
 }
+
+var ErrOffsetNotFound = fmt.Errorf("offset not found")
